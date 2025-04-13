@@ -21,9 +21,38 @@ Stack traces are preserved, by replacing removed types with white spaces.
 
 ```javascript
 const amaro = require('amaro');
-const { code } = amaro.transformSync("const foo: string = 'bar';");
+const { code } = amaro.transformSync("const foo: string = 'bar';", { mode: "strip-only" });
 console.log(code); // "const foo         = 'bar';"
 ```
+
+### Loader
+
+It is possible to use Amaro as an external loader to execute TypeScript files.
+This allows the installed Amaro to override the Amaro version used by Node.js.
+In order to use Amaro as an external loader, type stripping needs to be enabled.
+
+```bash
+node --experimental-strip-types --import="amaro/register" script.ts
+```
+
+Or with the alias:
+
+```bash
+node --experimental-strip-types --import="amaro/strip" script.ts
+```
+
+Enabling TypeScript feature transformation:
+
+```bash
+node --experimental-transform-types --import="amaro/transform" script.ts
+```
+
+> Note that the "amaro/transform" loader should be used with `--experimental-transform-types` flag, or
+> at least with `--enable-source-maps` flag, to preserve the original source maps.
+
+### TypeScript Version
+
+The supported TypeScript version is 5.8.
 
 ## License (MIT)
 

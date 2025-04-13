@@ -252,13 +252,13 @@ request, try the "🔄 Re-run all jobs" button, on the right-hand side of the
 If there are Jenkins CI failures unrelated to the change in the pull request,
 try "Resume Build". It is in the left navigation of the relevant
 `node-test-pull-request` job. It will preserve all the green results from the
-current job but re-run everything else. Start a fresh CI if more than seven days
-have elapsed since the original failing CI as the compiled binaries for the
-Windows and ARM platforms are only kept for seven days.
+current job but re-run everything else. Start a fresh CI by pressing "Retry"
+if more than seven days have elapsed since the original failing CI as the
+compiled binaries for the Windows and ARM platforms are only kept for seven days.
 
 If new commits are pushed to the pull request branch after the latest Jenkins
-CI run, a fresh CI run is required. It can be started by pressing "Retry" on
-the left sidebar, or by adding the `request-ci` label to the pull request.
+CI run, a fresh CI run is required. It can be started by adding the `request-ci`
+label to the pull request.
 
 #### Useful Jenkins CI jobs
 
@@ -437,6 +437,23 @@ For pull requests introducing new core modules:
 * Land with a [Stability Index][] of Experimental. The module must remain
   Experimental until a semver-major release.
 
+### Introducing new APIs on the global scope
+
+Exposing new APIs to the global scope that are available without
+an `import` or `require` call, including introducing new interfaces on
+`globalThis` like `globalThis.navigator`, and adding new properties on
+interfaces on `globalThis` like well known symbols, could break feature
+detection and Node.js environment detection.
+
+Exposing new APIs to the global scope unconditionally without any CLI
+flags must always be labeled as `semver-major`. The `semver-major` label may
+be waived through the regular TSC consensus process.
+
+It is recommended to start with exposing APIs to the global scope with an
+experimental CLI flag `--experimental-<feature-name>`, without being labeled as
+`semver-major`. When the new APIs are feature complete, turn the flag on by
+default with a CLI flag `--no-experimental-<feature-name>` to opt-out.
+
 ### Additions to Node-API
 
 Node-API provides an ABI-stable API guaranteed for future Node.js versions.
@@ -506,7 +523,6 @@ deprecation level of an API.
 Collaborators can opt to elevate pull requests or issues to the [TSC][].
 Do this if a pull request or issue:
 
-* Is labeled `semver-major`, or
 * Has a significant impact on the codebase, or
 * Is controversial, or
 * Is at an impasse among collaborators who are participating in the discussion.
@@ -514,6 +530,9 @@ Do this if a pull request or issue:
 @-mention the `@nodejs/tsc` GitHub team if you want to elevate an issue to the
 [TSC][]. Do not use the GitHub UI on the right-hand side to assign to
 `@nodejs/tsc` or request a review from `@nodejs/tsc`.
+
+If a pull request is labeled `semver-major`, you can request a review from the
+`@nodejs/tsc` GitHub team.
 
 The TSC serves as the final arbiter where required.
 
@@ -957,10 +976,9 @@ need to be attached anymore, as only important bugfixes will be included.
 ### Other labels
 
 * Operating system labels
-  * `macos`, `windows`, `smartos`, `aix`
-  * No `linux` label because it is the implied default
+  * `macos`, `windows`, `smartos`, `aix`, `linux`, etc.
 * Architecture labels
-  * `arm`, `mips`, `s390`, `ppc`
+  * `arm`, `mips`, `s390`, `ppc`, etc.
   * No `x86{_64}` label because it is the implied default
 
 ["Merge pull request"]: https://help.github.com/articles/merging-a-pull-request/#merging-a-pull-request-on-github

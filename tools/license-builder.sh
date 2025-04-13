@@ -24,7 +24,7 @@ ${licenseTextTrimmed}
 
 
 if ! [ -d "${rootdir}/deps/icu/" ] && ! [ -d "${rootdir}/deps/icu-small/" ]; then
-  echo "ICU not installed, run configure to download it, e.g. ./configure --with-intl=small-icu --download=icu"
+  echo "ICU not installed, run \`./configure --with-intl=small-icu --download=icu\` to download it."
   exit 1
 fi
 
@@ -32,7 +32,7 @@ fi
 # Dependencies bundled in distributions
 licenseText="$(cat "${rootdir}/deps/acorn/acorn/LICENSE")"
 addlicense "Acorn" "deps/acorn" "$licenseText"
-licenseText="$(tail -n +3 "${rootdir}/deps/cares/LICENSE.md")"
+licenseText="$(cat "${rootdir}/deps/cares/LICENSE.md")"
 addlicense "c-ares" "deps/cares" "$licenseText"
 licenseText="$(cat "${rootdir}/deps/cjs-module-lexer/LICENSE")"
 addlicense "cjs-module-lexer" "deps/cjs-module-lexer" "$licenseText"
@@ -40,6 +40,8 @@ licenseText="$(cat "${rootdir}/deps/v8/third_party/ittapi/LICENSES/BSD-3-Clause.
 addlicense "ittapi" "deps/v8/third_party/ittapi" "$licenseText"
 licenseText="$(cat "${rootdir}/deps/amaro/LICENSE.md")"
 addlicense "amaro" "deps/amaro" "$licenseText"
+licenseText="$(cat "${rootdir}/deps/amaro/dist/LICENSE")"
+addlicense "swc" "deps/amaro/dist" "$licenseText"
 if [ -f "${rootdir}/deps/icu/LICENSE" ]; then
   # ICU 57 and following. Drop the BOM
   licenseText="$(sed -e '1s/^[^a-zA-Z ]*ICU/ICU/' -e :a -e 's/<[^>]*>//g;s/	/ /g;s/ +$//;/</N;//ba' "${rootdir}/deps/icu/LICENSE")"
@@ -97,8 +99,8 @@ addlicense "npm" "deps/npm" "$licenseText"
 # Build tools
 licenseText="$(cat "${rootdir}/tools/gyp/LICENSE")"
 addlicense "GYP" "tools/gyp" "$licenseText"
-licenseText="$(cat "${rootdir}/tools/inspector_protocol/LICENSE")"
-addlicense "inspector_protocol" "tools/inspector_protocol" "$licenseText"
+licenseText="$(cat "${rootdir}/deps/inspector_protocol/LICENSE")"
+addlicense "inspector_protocol" "deps/inspector_protocol" "$licenseText"
 licenseText="$(cat "${rootdir}/tools/inspector_protocol/jinja2/LICENSE")"
 addlicense "jinja2" "tools/inspector_protocol/jinja2" "$licenseText"
 licenseText="$(cat "${rootdir}/tools/inspector_protocol/markupsafe/LICENSE")"
@@ -109,8 +111,6 @@ licenseText="$(sed -e '/^$/,$d' -e 's/^#$//' -e 's/^# //' "${rootdir}/tools/cppl
 addlicense "cpplint.py" "tools/cpplint.py" "$licenseText"
 licenseText="$(sed -e '/^$/,$d' -e 's/^#$//' -e 's/^# //' "${rootdir}/tools/gypi_to_gn.py" | tail -n +3)"
 addlicense "gypi_to_gn.py" "tools/gypi_to_gn.py" "$licenseText"
-licenseText="$(cat "${rootdir}/tools/eslint/node_modules/eslint/LICENSE")"
-addlicense "ESLint" "tools/eslint/node_modules/eslint" "$licenseText"
 licenseText="$(cat "${rootdir}/deps/googletest/LICENSE")"
 addlicense "gtest" "deps/googletest" "$licenseText"
 
@@ -129,6 +129,10 @@ addlicense "caja" "lib/internal/freeze_intrinsics.js" "$licenseText"
 # brotli
 licenseText="$(cat "${rootdir}/deps/brotli/LICENSE")"
 addlicense "brotli" "deps/brotli" "$licenseText"
+
+# zstd
+licenseText="$(cat "${rootdir}/deps/zstd/LICENSE")"
+addlicense "zstd" "deps/zstd" "$licenseText"
 
 licenseText="$(cat "${rootdir}/deps/histogram/LICENSE.txt")"
 addlicense "HdrHistogram" "deps/histogram" "$licenseText"

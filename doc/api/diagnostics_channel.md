@@ -635,8 +635,6 @@ added:
  - v18.19.0
 -->
 
-> Stability: 1 - Experimental
-
 * `subscribers` {Object} Set of [TracingChannel Channels][] subscribers
   * `start` {Function} The [`start` event][] subscriber
   * `end` {Function} The [`end` event][] subscriber
@@ -703,8 +701,6 @@ added:
  - v19.9.0
  - v18.19.0
 -->
-
-> Stability: 1 - Experimental
 
 * `subscribers` {Object} Set of [TracingChannel Channels][] subscribers
   * `start` {Function} The [`start` event][] subscriber
@@ -775,8 +771,6 @@ added:
  - v18.19.0
 -->
 
-> Stability: 1 - Experimental
-
 * `fn` {Function} Function to wrap a trace around
 * `context` {Object} Shared object to correlate events through
 * `thisArg` {any} The receiver to be used for the function call
@@ -826,8 +820,6 @@ added:
  - v18.19.0
 -->
 
-> Stability: 1 - Experimental
-
 * `fn` {Function} Promise-returning function to wrap a trace around
 * `context` {Object} Shared object to correlate trace events through
 * `thisArg` {any} The receiver to be used for the function call
@@ -872,15 +864,13 @@ channels.tracePromise(async () => {
 });
 ```
 
-#### `tracingChannel.traceCallback(fn, position, context, thisArg, ...args)`
+#### `tracingChannel.traceCallback(fn[, position[, context[, thisArg[, ...args]]]])`
 
 <!-- YAML
 added:
  - v19.9.0
  - v18.19.0
 -->
-
-> Stability: 1 - Experimental
 
 * `fn` {Function} callback using function to wrap a trace around
 * `position` {number} Zero-indexed argument position of expected callback
@@ -927,7 +917,7 @@ const channels = diagnostics_channel.tracingChannel('my-channel');
 channels.traceCallback((arg1, callback) => {
   // Do something
   callback(null, 'result');
-}, {
+}, 1, {
   some: 'thing',
 }, thisArg, arg1, callback);
 ```
@@ -984,8 +974,6 @@ added:
  - v22.0.0
  - v20.13.0
 -->
-
-> Stability: 1 - Experimental
 
 * Returns: {boolean} `true` if any of the individual channels has a subscriber,
   `false` if not.
@@ -1121,13 +1109,64 @@ While the diagnostics\_channel API is now considered stable, the built-in
 channels currently available are not. Each channel must be declared stable
 independently.
 
+#### Console
+
+`console.log`
+
+* `args` {any\[]}
+
+Emitted when `console.log()` is called. Receives and array of the arguments
+passed to `console.log()`.
+
+`console.info`
+
+* `args` {any\[]}
+
+Emitted when `console.info()` is called. Receives and array of the arguments
+passed to `console.info()`.
+
+`console.debug`
+
+* `args` {any\[]}
+
+Emitted when `console.debug()` is called. Receives and array of the arguments
+passed to `console.debug()`.
+
+`console.warn`
+
+* `args` {any\[]}
+
+Emitted when `console.warn()` is called. Receives and array of the arguments
+passed to `console.warn()`.
+
+`console.error`
+
+* `args` {any\[]}
+
+Emitted when `console.error()` is called. Receives and array of the arguments
+passed to `console.error()`.
+
 #### HTTP
+
+`http.client.request.created`
+
+* `request` {http.ClientRequest}
+
+Emitted when client creates a request object.
+Unlike `http.client.request.start`, this event is emitted before the request has been sent.
 
 `http.client.request.start`
 
 * `request` {http.ClientRequest}
 
 Emitted when client starts a request.
+
+`http.client.request.error`
+
+* `request` {http.ClientRequest}
+* `error` {Error}
+
+Emitted when an error occurs during a client request.
 
 `http.client.response.finish`
 
@@ -1144,6 +1183,14 @@ Emitted when client receives a response.
 * `server` {http.Server}
 
 Emitted when server receives a request.
+
+`http.server.response.created`
+
+* `request` {http.IncomingMessage}
+* `response` {http.ServerResponse}
+
+Emitted when server creates a response.
+The event is emitted before the response is sent.
 
 `http.server.response.finish`
 
@@ -1260,6 +1307,14 @@ added: v16.18.0
 
 Emitted when a new process is created.
 
+`execve`
+
+* `execPath` {string}
+* `args` {string\[]}
+* `env` {string\[]}
+
+Emitted when [`process.execve()`][] is invoked.
+
 #### Worker Thread
 
 <!-- YAML
@@ -1289,5 +1344,6 @@ Emitted when a new thread is created.
 [`end` event]: #endevent
 [`error` event]: #errorevent
 [`net.Server.listen()`]: net.md#serverlisten
+[`process.execve()`]: process.md#processexecvefile-args-env
 [`start` event]: #startevent
 [context loss]: async_context.md#troubleshooting-context-loss

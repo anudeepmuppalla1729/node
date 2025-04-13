@@ -15,7 +15,18 @@ const EXPECTED_EVENTS = {
         requestId: 'request-id-1',
         request: {
           url: 'https://nodejs.org/en',
-          method: 'GET'
+          method: 'GET',
+          headers: {},
+        },
+        timestamp: 1000,
+        wallTime: 1000,
+      },
+      expected: {
+        requestId: 'request-id-1',
+        request: {
+          url: 'https://nodejs.org/en',
+          method: 'GET',
+          headers: {},
         },
         timestamp: 1000,
         wallTime: 1000,
@@ -26,6 +37,24 @@ const EXPECTED_EVENTS = {
       params: {
         requestId: 'request-id-1',
         timestamp: 1000,
+        type: 'Other',
+        response: {
+          url: 'https://nodejs.org/en',
+          status: 200,
+          statusText: '',
+          headers: { host: 'nodejs.org' }
+        }
+      },
+      expected: {
+        requestId: 'request-id-1',
+        timestamp: 1000,
+        type: 'Other',
+        response: {
+          url: 'https://nodejs.org/en',
+          status: 200,
+          statusText: '',
+          headers: { host: 'nodejs.org' }
+        }
       }
     },
     {
@@ -33,6 +62,15 @@ const EXPECTED_EVENTS = {
       params: {
         requestId: 'request-id-1',
         timestamp: 1000,
+      }
+    },
+    {
+      name: 'loadingFailed',
+      params: {
+        requestId: 'request-id-1',
+        timestamp: 1000,
+        type: 'Document',
+        errorText: 'Failed to load resource'
       }
     },
   ]
@@ -68,7 +106,12 @@ const runAsyncTest = async () => {
   for (const [domain, events] of Object.entries(EXPECTED_EVENTS)) {
     for (const event of events) {
       session.on(`${domain}.${event.name}`, common.mustCall(({ params }) => {
-        assert.deepStrictEqual(params, event.params);
+        if (event.name === 'requestWillBeSent') {
+          // Initiator is automatically captured and contains caller info.
+          // No need to validate it.
+          delete params.initiator;
+        }
+        assert.deepStrictEqual(params, event.expected ?? event.params);
       }));
       inspector[domain][event.name](event.params);
     }

@@ -14,7 +14,9 @@
     'force_dynamic_crt%': 0,
     'ossfuzz' : 'false',
     'node_module_version%': '',
+    'node_use_amaro%': 'true',
     'node_shared_brotli%': 'false',
+    'node_shared_zstd%': 'false',
     'node_shared_zlib%': 'false',
     'node_shared_http_parser%': 'false',
     'node_shared_cares%': 'false',
@@ -56,7 +58,6 @@
       'deps/acorn/acorn/dist/acorn.js',
       'deps/acorn/acorn-walk/dist/walk.js',
       'deps/minimatch/index.js',
-      'deps/amaro/dist/index.js',
       '<@(node_builtin_shareable_builtins)',
     ],
     'node_sources': [
@@ -68,6 +69,7 @@
       'src/api/exceptions.cc',
       'src/api/hooks.cc',
       'src/api/utils.cc',
+      'src/async_context_frame.cc',
       'src/async_wrap.cc',
       'src/base_object.cc',
       'src/cares_wrap.cc',
@@ -103,9 +105,11 @@
       'src/node_buffer.cc',
       'src/node_builtins.cc',
       'src/node_config.cc',
+      'src/node_config_file.cc',
       'src/node_constants.cc',
       'src/node_contextify.cc',
       'src/node_credentials.cc',
+      'src/node_debug.cc',
       'src/node_dir.cc',
       'src/node_dotenv.cc',
       'src/node_env_var.cc',
@@ -144,6 +148,7 @@
       'src/node_trace_events.cc',
       'src/node_types.cc',
       'src/node_url.cc',
+      'src/node_url_pattern.cc',
       'src/node_util.cc',
       'src/node_v8.cc',
       'src/node_wasi.cc',
@@ -185,6 +190,7 @@
       'src/aliased_buffer-inl.h',
       'src/aliased_struct.h',
       'src/aliased_struct-inl.h',
+      'src/async_context_frame.h',
       'src/async_wrap.h',
       'src/async_wrap-inl.h',
       'src/base_object.h',
@@ -199,6 +205,7 @@
       'src/compile_cache.h',
       'src/connect_wrap.h',
       'src/connection_wrap.h',
+      'src/cppgc_helpers.h',
       'src/dataqueue/queue.h',
       'src/debug_utils.h',
       'src/debug_utils-inl.h',
@@ -224,9 +231,11 @@
       'src/node_blob.h',
       'src/node_buffer.h',
       'src/node_builtins.h',
+      'src/node_config_file.h',
       'src/node_constants.h',
       'src/node_context_data.h',
       'src/node_contextify.h',
+      'src/node_debug.h',
       'src/node_dir.h',
       'src/node_dotenv.h',
       'src/node_errors.h',
@@ -270,6 +279,7 @@
       'src/node_stat_watcher.h',
       'src/node_union_bytes.h',
       'src/node_url.h',
+      'src/node_url_pattern.h',
       'src/node_version.h',
       'src/node_v8.h',
       'src/node_v8_platform-inl.h',
@@ -395,29 +405,6 @@
       'src/quic/transportparams.h',
       'src/quic/quic.cc',
     ],
-    'node_cctest_sources': [
-      'src/node_snapshot_stub.cc',
-      'test/cctest/node_test_fixture.cc',
-      'test/cctest/node_test_fixture.h',
-      'test/cctest/test_aliased_buffer.cc',
-      'test/cctest/test_base64.cc',
-      'test/cctest/test_base_object_ptr.cc',
-      'test/cctest/test_cppgc.cc',
-      'test/cctest/test_node_postmortem_metadata.cc',
-      'test/cctest/test_node_task_runner.cc',
-      'test/cctest/test_environment.cc',
-      'test/cctest/test_linked_binding.cc',
-      'test/cctest/test_node_api.cc',
-      'test/cctest/test_path.cc',
-      'test/cctest/test_per_process.cc',
-      'test/cctest/test_platform.cc',
-      'test/cctest/test_report.cc',
-      'test/cctest/test_json_utils.cc',
-      'test/cctest/test_sockaddr.cc',
-      'test/cctest/test_traced_value.cc',
-      'test/cctest/test_util.cc',
-      'test/cctest/test_dataqueue.cc',
-    ],
     'node_cctest_openssl_sources': [
       'test/cctest/test_crypto_clienthello.cc',
       'test/cctest/test_node_crypto.cc',
@@ -427,6 +414,7 @@
       'test/cctest/test_quic_tokens.cc',
     ],
     'node_cctest_inspector_sources': [
+      'test/cctest/inspector/test_node_protocol.cc',
       'test/cctest/test_inspector_socket.cc',
       'test/cctest/test_inspector_socket_server.cc',
     ],
@@ -477,10 +465,14 @@
         '-Wno-unused-parameter',
         '-Werror=undefined-inline',
         '-Werror=extra-semi',
+        '-Werror=ctad-maybe-unsupported',
       ],
     },
 
     'conditions': [
+      ['clang==0 and OS!="win"', {
+        'cflags': [ '-Wno-restrict', ],
+      }],
       # Pointer authentication for ARM64.
       ['target_arch=="arm64"', {
           'target_conditions': [
@@ -841,11 +833,8 @@
       'dependencies': [
         'deps/googletest/googletest.gyp:gtest_prod',
         'deps/histogram/histogram.gyp:histogram',
-        'deps/sqlite/sqlite.gyp:sqlite',
-        'deps/simdjson/simdjson.gyp:simdjson',
-        'deps/simdutf/simdutf.gyp:simdutf',
-        'deps/ada/ada.gyp:ada',
         'deps/nbytes/nbytes.gyp:nbytes',
+        'tools/v8_gypfiles/abseil.gyp:abseil',
         'node_js2c#host',
       ],
 
@@ -866,8 +855,6 @@
         'openssl_default_cipher_list%': '',
       },
 
-      'cflags': ['-Werror=unused-result'],
-
       'defines': [
         'NODE_ARCH="<(target_arch)"',
         'NODE_PLATFORM="<(OS)"',
@@ -875,6 +862,7 @@
         # Warn when using deprecated V8 APIs.
         'V8_DEPRECATION_WARNINGS=1',
         'NODE_OPENSSL_SYSTEM_CERT_PATH="<(openssl_system_ca_path)"',
+        "SQLITE_ENABLE_SESSION"
       ],
 
       # - "C4244: conversion from 'type1' to 'type2', possible loss of data"
@@ -886,6 +874,9 @@
           'defines': [
             'NODE_OPENSSL_DEFAULT_CIPHER_LIST="<(openssl_default_cipher_list)"'
            ]
+        }],
+        [ 'suppress_all_error_on_warn=="false"', {
+          'cflags': ['-Werror=unused-result'],
         }],
         [ 'error_on_warn=="true"', {
           'cflags': ['-Werror'],
@@ -939,10 +930,14 @@
         [ 'node_use_openssl=="true"', {
           'sources': [
             '<@(node_crypto_sources)',
-            '<@(node_quic_sources)',
           ],
           'dependencies': [
             'deps/ncrypto/ncrypto.gyp:ncrypto',
+          ],
+        }],
+        [ 'node_quic=="true"', {
+          'sources': [
+            '<@(node_quic_sources)',
           ],
         }],
         [ 'OS in "linux freebsd mac solaris" and '
@@ -1030,7 +1025,6 @@
       'dependencies': [
         '<(node_lib_target_name)',
         'deps/histogram/histogram.gyp:histogram',
-        'deps/sqlite/sqlite.gyp:sqlite',
       ],
 
       'includes': [
@@ -1042,7 +1036,6 @@
         'deps/v8/include',
         'deps/cares/include',
         'deps/uv/include',
-        'deps/sqlite',
         'test/cctest',
       ],
 
@@ -1075,7 +1068,6 @@
       'dependencies': [
         '<(node_lib_target_name)',
         'deps/histogram/histogram.gyp:histogram',
-        'deps/sqlite/sqlite.gyp:sqlite',
         'deps/uvwasi/uvwasi.gyp:uvwasi',
       ],
       'includes': [
@@ -1086,7 +1078,6 @@
         'tools/msvs/genfiles',
         'deps/v8/include',
         'deps/cares/include',
-        'deps/sqlite',
         'deps/uv/include',
         'deps/uvwasi/include',
         'test/cctest',
@@ -1121,9 +1112,7 @@
         '<(node_lib_target_name)',
         'deps/googletest/googletest.gyp:gtest_prod',
         'deps/histogram/histogram.gyp:histogram',
-        'deps/sqlite/sqlite.gyp:sqlite',
         'deps/uvwasi/uvwasi.gyp:uvwasi',
-        'deps/ada/ada.gyp:ada',
         'deps/nbytes/nbytes.gyp:nbytes',
       ],
       'includes': [
@@ -1134,7 +1123,6 @@
         'tools/msvs/genfiles',
         'deps/v8/include',
         'deps/cares/include',
-        'deps/sqlite',
         'deps/uv/include',
         'deps/uvwasi/include',
         'test/cctest',
@@ -1171,11 +1159,8 @@
         'deps/googletest/googletest.gyp:gtest',
         'deps/googletest/googletest.gyp:gtest_main',
         'deps/histogram/histogram.gyp:histogram',
-        'deps/sqlite/sqlite.gyp:sqlite',
-        'deps/simdjson/simdjson.gyp:simdjson',
-        'deps/simdutf/simdutf.gyp:simdutf',
-        'deps/ada/ada.gyp:ada',
         'deps/nbytes/nbytes.gyp:nbytes',
+        'tools/v8_gypfiles/abseil.gyp:abseil',
       ],
 
       'includes': [
@@ -1188,7 +1173,6 @@
         'deps/v8/include',
         'deps/cares/include',
         'deps/uv/include',
-        'deps/sqlite',
         'test/cctest',
       ],
 
@@ -1208,17 +1192,26 @@
           'dependencies': [
             'deps/ncrypto/ncrypto.gyp:ncrypto',
           ],
-          'sources': [ '<@(node_cctest_openssl_sources)' ],
+        }, {
+          'sources!': [ '<@(node_cctest_openssl_sources)' ],
         }],
         ['v8_enable_inspector==1', {
           'defines': [
             'HAVE_INSPECTOR=1',
           ],
-          'sources': [ '<@(node_cctest_inspector_sources)' ],
+          'include_dirs': [
+            # TODO(legendecas): make node_inspector.gypi a dependable target.
+            '<(SHARED_INTERMEDIATE_DIR)', # for inspector
+            '<(SHARED_INTERMEDIATE_DIR)/src', # for inspector
+          ],
+          'dependencies': [
+            'deps/inspector_protocol/inspector_protocol.gyp:crdtp',
+          ],
         }, {
            'defines': [
              'HAVE_INSPECTOR=0',
-           ]
+           ],
+           'sources!': [ '<@(node_cctest_inspector_sources)' ],
         }],
         ['OS=="solaris"', {
           'ldflags': [ '-I<(SHARED_INTERMEDIATE_DIR)' ]
@@ -1253,8 +1246,6 @@
       'dependencies': [
         '<(node_lib_target_name)',
         'deps/histogram/histogram.gyp:histogram',
-        'deps/sqlite/sqlite.gyp:sqlite',
-        'deps/ada/ada.gyp:ada',
         'deps/nbytes/nbytes.gyp:nbytes',
       ],
 
@@ -1269,7 +1260,6 @@
         'deps/v8/include',
         'deps/cares/include',
         'deps/uv/include',
-        'deps/sqlite',
         'test/embedding',
       ],
 
@@ -1330,9 +1320,6 @@
       'target_name': 'node_js2c',
       'type': 'executable',
       'toolsets': ['host'],
-      'dependencies': [
-        'deps/simdutf/simdutf.gyp:simdutf#host',
-      ],
       'include_dirs': [
         'tools',
         'src',
@@ -1344,6 +1331,9 @@
         'src/embedded_data.cc',
       ],
       'conditions': [
+        [ 'node_shared_simdutf=="false"', {
+          'dependencies': [ 'deps/simdutf/simdutf.gyp:simdutf#host' ],
+        }],
         [ 'node_shared_libuv=="false"', {
           'dependencies': [ 'deps/uv/uv.gyp:libuv#host' ],
         }],
@@ -1369,11 +1359,7 @@
       'dependencies': [
         '<(node_lib_target_name)',
         'deps/histogram/histogram.gyp:histogram',
-        'deps/sqlite/sqlite.gyp:sqlite',
-        'deps/ada/ada.gyp:ada',
         'deps/nbytes/nbytes.gyp:nbytes',
-        'deps/simdjson/simdjson.gyp:simdjson',
-        'deps/simdutf/simdutf.gyp:simdutf',
       ],
 
       'includes': [
@@ -1386,7 +1372,6 @@
         'deps/v8/include',
         'deps/cares/include',
         'deps/uv/include',
-        'deps/sqlite',
       ],
 
       'defines': [ 'NODE_WANT_INTERNALS=1' ],
@@ -1395,6 +1380,12 @@
         'src/node_snapshot_stub.cc',
         'tools/snapshot/node_mksnapshot.cc',
       ],
+
+      'msvs_settings': {
+        'VCLinkerTool': {
+          'EnableCOMDATFolding': '1', # /OPT:NOICF
+        },
+      },
 
       'conditions': [
         ['node_write_snapshot_as_array_literals=="true"', {

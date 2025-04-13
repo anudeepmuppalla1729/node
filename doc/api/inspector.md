@@ -31,11 +31,11 @@ const inspector = require('node:inspector');
 
 ## Promises API
 
-> Stability: 1 - Experimental
-
 <!-- YAML
 added: v19.0.0
 -->
+
+> Stability: 1 - Experimental
 
 ### Class: `inspector.Session`
 
@@ -505,7 +505,7 @@ inspector.Network.requestWillBeSent({
   request: {
     url: 'https://nodejs.org/en',
     method: 'GET',
-  }
+  },
 });
 ```
 
@@ -513,7 +513,8 @@ inspector.Network.requestWillBeSent({
 
 <!-- YAML
 added:
- - REPLACEME
+ - v22.6.0
+ - v20.18.0
 -->
 
 > Stability: 1 - Experimental
@@ -529,7 +530,8 @@ the application is about to send an HTTP request.
 
 <!-- YAML
 added:
- - REPLACEME
+ - v22.6.0
+ - v20.18.0
 -->
 
 > Stability: 1 - Experimental
@@ -545,7 +547,8 @@ HTTP response is available.
 
 <!-- YAML
 added:
- - REPLACEME
+ - v22.6.0
+ - v20.18.0
 -->
 
 > Stability: 1 - Experimental
@@ -556,6 +559,23 @@ This feature is only available with the `--experimental-network-inspection` flag
 
 Broadcasts the `Network.loadingFinished` event to connected frontends. This event indicates that
 HTTP request has finished loading.
+
+### `inspector.Network.loadingFailed([params])`
+
+<!-- YAML
+added:
+ - v22.7.0
+ - v20.18.0
+-->
+
+> Stability: 1 - Experimental
+
+* `params` {Object}
+
+This feature is only available with the `--experimental-network-inspection` flag enabled.
+
+Broadcasts the `Network.loadingFailed` event to connected frontends. This event indicates that
+HTTP request has failed to load.
 
 ## Support of breakpoints
 

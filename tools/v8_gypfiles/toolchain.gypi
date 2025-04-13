@@ -69,9 +69,6 @@
     # Enable profiling support. Only required on Windows.
     'v8_enable_prof%': 0,
 
-    # Some versions of GCC 4.5 seem to need -fno-strict-aliasing.
-    'v8_no_strict_aliasing%': 0,
-
     # Chrome needs this definition unconditionally. For standalone V8 builds,
     # it's handled in gypfiles/standalone.gypi.
     'want_separate_host_toolset%': 1,
@@ -104,7 +101,7 @@
   # [GYP] this needs to be outside of the top level 'variables'
   'conditions': [
     ['host_arch=="ia32" or host_arch=="x64" or \
-      host_arch=="ppc" or host_arch=="ppc64" or \
+      host_arch=="ppc64" or \
       host_arch=="s390x" or \
       clang==1', {
       'variables': {
@@ -116,7 +113,7 @@
       },
     }],
     ['target_arch=="ia32" or target_arch=="x64" or \
-      target_arch=="ppc" or target_arch=="ppc64" or \
+      target_arch=="ppc64" or \
       target_arch=="s390x" or clang==1', {
       'variables': {
         'target_cxx_is_biarch%': 1,
@@ -331,43 +328,24 @@
           }],
           ],
       }],  # s390x
-      ['v8_target_arch=="ppc" or v8_target_arch=="ppc64"', {
+      ['v8_target_arch=="ppc64"', {
+        'defines': [
+          'V8_TARGET_ARCH_PPC64',
+        ],
+        'cflags': [
+          '-ffp-contract=off',
+        ],
         'conditions': [
-          ['v8_target_arch=="ppc"', {
-            'defines': [
-              'V8_TARGET_ARCH_PPC',
-            ],
+          ['OS=="aix" or OS=="os400"', {
+            # Work around AIX ceil, trunc and round oddities.
+            'cflags': [ '-mcpu=power5+ -mfprnd' ],
           }],
-          ['v8_target_arch=="ppc64"', {
-            'defines': [
-              'V8_TARGET_ARCH_PPC64',
-            ],
-            'cflags': [
-              '-ffp-contract=off',
-            ],
-          }],
-          ['v8_host_byteorder=="little"', {
-            'defines': [
-              'V8_TARGET_ARCH_PPC_LE',
-            ],
-          }],
-          ['v8_host_byteorder=="big"', {
-            'defines': [
-              'V8_TARGET_ARCH_PPC_BE',
-            ],
-            'conditions': [
-              ['OS=="aix" or OS=="os400"', {
-                # Work around AIX ceil, trunc and round oddities.
-                'cflags': [ '-mcpu=power5+ -mfprnd' ],
-              }],
-              ['OS=="aix" or OS=="os400"', {
-                # Work around AIX assembler popcntb bug.
-                'cflags': [ '-mno-popcntb' ],
-              }],
-            ],
+          ['OS=="aix" or OS=="os400"', {
+            # Work around AIX assembler popcntb bug.
+            'cflags': [ '-mno-popcntb' ],
           }],
         ],
-      }],  # ppc
+      }],  # ppc64
       ['v8_target_arch=="ia32"', {
         'defines': [
           'V8_TARGET_ARCH_IA32',
@@ -540,7 +518,7 @@
         'defines': [
           'WIN32',
           'NOMINMAX',  # Refs: https://chromium-review.googlesource.com/c/v8/v8/+/1456620
-          '_WIN32_WINNT=0x0602',  # Windows 8
+          '_WIN32_WINNT=0x0A00',  # Windows 10
           '_SILENCE_ALL_CXX20_DEPRECATION_WARNINGS',
         ],
         # 4351: VS 2005 and later are warning us that they've fixed a bug
@@ -598,8 +576,7 @@
       }],
       ['(OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris" \
          or OS=="netbsd" or OS=="mac" or OS=="android" or OS=="qnx") and \
-        (v8_target_arch=="arm" or v8_target_arch=="ia32" or \
-         v8_target_arch=="ppc")', {
+        (v8_target_arch=="arm" or v8_target_arch=="ia32")', {
         'target_conditions': [
           ['_toolset=="host"', {
             'conditions': [
@@ -666,14 +643,6 @@
           'V8_ANDROID_LOG_STDOUT',
         ],
       }],
-      ['OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris" \
-         or OS=="netbsd" or OS=="qnx" or OS=="aix" or OS=="os400"', {
-        'conditions': [
-          [ 'v8_no_strict_aliasing==1', {
-            'cflags': [ '-fno-strict-aliasing' ],
-          }],
-        ],  # conditions
-      }],
       ['OS=="solaris"', {
         'defines': [ '__C99FEATURES__=1' ],  # isinf() etc.
       }],
@@ -690,9 +659,6 @@
           '__STDC_FORMAT_MACROS',
           '_ALL_SOURCE=1'],
         'conditions': [
-          [ 'v8_target_arch=="ppc"', {
-            'ldflags': [ '-Wl,-bmaxdata:0x60000000/dsa' ],
-          }],
           [ 'v8_target_arch=="ppc64"', {
             'cflags': [ '-maix64', '-fdollars-in-identifiers', '-fno-extern-tls-init' ],
             'ldflags': [ '-maix64 -Wl,-bbigtoc' ],
@@ -830,7 +796,6 @@
               ['OS=="mac"', {
                 'xcode_settings': {
                   'GCC_OPTIMIZATION_LEVEL': '3',  # -O3
-                  'GCC_STRICT_ALIASING': 'YES',
                 },
               }],
               ['v8_enable_slow_dchecks==1', {
@@ -889,12 +854,6 @@
           ['OS=="mac"', {
             'xcode_settings': {
               'GCC_OPTIMIZATION_LEVEL': '3',  # -O3
-
-              # -fstrict-aliasing.  Mainline gcc
-              # enables this at -O2 and above,
-              # but Apple gcc does not unless it
-              # is specified explicitly.
-              'GCC_STRICT_ALIASING': 'YES',
             },
           }],  # OS=="mac"
           ['OS=="win"', {
